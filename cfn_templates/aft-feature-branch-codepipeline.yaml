@@ -1,0 +1,194 @@
+# Copyright 2019 Amazon.com, Inc. and its affiliates. All Rights Reserved.
+#
+# Licensed under the Amazon Software License (the 'License').
+# You may not use this file except in compliance with the License.
+# A copy of the License is located at
+#
+#   http://aws.amazon.com/asl/
+#
+# or in the 'license' file accompanying this file. This file is distributed
+# on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
+# permissions and limitations under the License.
+
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Pipeline Template"
+
+Parameters:
+  RepositoryName:
+    Type:  String
+  BranchName:
+    Type:  String
+  BucketName:
+    Type:  String
+  ArtifactsBucket:
+    Type:  String
+  CodePipelineARN:
+    Type:  String
+  CodeBuildARN:
+    Type:  String
+
+Conditions: 
+  GlobalCustomizations: !Equals [ !Ref RepositoryName, "terraform-aft-global-customizations" ]
+  AccountCustomizations: !Equals [ !Ref RepositoryName, "terraform-aft-account-customizations" ]
+
+Resources:
+
+#----------------------------------------------------------------------#
+# Resource CodePipeline
+#----------------------------------------------------------------------#
+  AFTPipeline:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      Name: !Join ['-', [!Ref RepositoryName, !Ref BranchName]]
+      RoleArn: !Ref CodePipelineARN
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactsBucket
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceCode
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: "1"
+                Provider: CodeCommit
+              Configuration:
+                RepositoryName: !Ref RepositoryName
+                BranchName: !Ref BranchName
+              OutputArtifacts:
+                - Name: Source 
+              RunOrder: 1
+
+#----------------------------------------------------------------------#
+# If RepoName=GlobalCustomizations, then create the codebuild project to generate terraform plan for global repo
+#----------------------------------------------------------------------#
+        - !If 
+          - GlobalCustomizations
+          - Name: TF-Plan-GlobalCustomizations
+            Actions: 
+            - Name: TF-Plan-GlobalCustomizations
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: Source 
+              OutputArtifacts:
+                - Name: TF-Plan-GlobalCustomizations
+              Configuration:
+                ProjectName: !Join ['-', ["TF-Plan", !Ref RepositoryName, !Ref BranchName]]
+              RunOrder: 1
+          - !Ref AWS::NoValue 
+
+#----------------------------------------------------------------------#
+# If RepoName=AccountCustomizations, then create the codebuild project to generate terraform plan for account repo
+#----------------------------------------------------------------------#
+        - !If 
+          - AccountCustomizations
+          - Name: TF-Plan-AccountCustomizations
+            Actions: 
+            - Name: Workloads-OU
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: Source 
+              OutputArtifacts:
+                - Name: TF-Plan-AccountCustomizations-Workloads-OU
+              Configuration:
+                ProjectName: !Join ['-', ["TF-Plan", "AccountCustomizations", !Ref BranchName, "Workloads-OU"]]
+              RunOrder: 1
+            - Name: Infrastructure-OU
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: "1"
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: Source 
+              OutputArtifacts:
+                - Name: TF-Plan-AccountCustomizations-Infrastructure-OU
+              Configuration:
+                ProjectName: !Join ['-', ["TF-Plan", "AccountCustomizations", !Ref BranchName, "Infrastructure-OU"]]
+              RunOrder: 1
+          - !Ref AWS::NoValue 
+
+  AFTAccountCustomizationsTFPlanWorkloadsOU: 
+    Condition: AccountCustomizations
+    Type: AWS::CodeBuild::Project 
+    Properties: 
+      Name: !Join ['-', ["TF-Plan", "AccountCustomizations", !Ref BranchName, "Workloads-OU"]]
+      Description: "AWS CodeBuild project to generate terraform plan for workloads OU in AFT account customizations repository"
+      ConcurrentBuildLimit: 1
+      Source: 
+        Type: CODEPIPELINE 
+        BuildSpec: !Sub 'arn:aws:s3:::${BucketName}/buildspec/tf-plan-account-customizations.yaml'
+      Environment: 
+        Type: LINUX_CONTAINER 
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
+        EnvironmentVariables:         
+          - Name: BranchName 
+            Value: !Ref BranchName 
+          - Name: VENDED_ACCOUNT_ID
+            Value: <12-digit-account-id> under "workloads" acccount template
+          - Name: VENDED_ACCOUNT_TEMPLATE
+            Value: "workloads"
+      Artifacts: 
+        Type: CODEPIPELINE 
+      ServiceRole: !Ref CodeBuildARN
+      TimeoutInMinutes: 10 
+
+  AFTAccountCustomizationsTFPlanInfrastructureOU: 
+    Condition: AccountCustomizations
+    Type: AWS::CodeBuild::Project 
+    Properties: 
+      Name: !Join ['-', ["TF-Plan", "AccountCustomizations", !Ref BranchName, "Infrastructure-OU"]]
+      Description: "AWS CodeBuild project to generate terraform plan for infrastructure OU in AFT account customizations repository"
+      ConcurrentBuildLimit: 1
+      Source: 
+        Type: CODEPIPELINE 
+        BuildSpec: !Sub 'arn:aws:s3:::${BucketName}/buildspec/tf-plan-account-customizations.yaml'
+      Environment: 
+        Type: LINUX_CONTAINER 
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
+        EnvironmentVariables:         
+          - Name: BranchName 
+            Value: !Ref BranchName 
+          - Name: VENDED_ACCOUNT_ID
+            Value: <12-digit-account-id> under "infrastructure" acccount template
+          - Name: VENDED_ACCOUNT_TEMPLATE
+            Value: "infrastructure"
+      Artifacts: 
+        Type: CODEPIPELINE 
+      ServiceRole: !Ref CodeBuildARN
+      TimeoutInMinutes: 10
+
+  AFTGlobalCustomizationsTFPlan:
+    Condition: GlobalCustomizations
+    Type: AWS::CodeBuild::Project 
+    Properties: 
+      Name: !Join ['-', ["TF-Plan", !Ref RepositoryName, !Ref BranchName]]
+      Description: "AWS CodeBuild project to generate terraform plan for AFT Global customizations repository"
+      Source: 
+        Type: CODEPIPELINE 
+        BuildSpec: !Sub 'arn:aws:s3:::${BucketName}/buildspec/tf-plan-global-customizations.yaml'
+      Environment: 
+        Type: LINUX_CONTAINER 
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/amazonlinux2-x86_64-standard:4.0
+        EnvironmentVariables:         
+          - Name: BranchName 
+            Value: !Ref BranchName 
+      Artifacts: 
+        Type: CODEPIPELINE 
+      ServiceRole: !Ref CodeBuildARN
+      TimeoutInMinutes: 10 
+

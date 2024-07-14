@@ -1,0 +1,9 @@
+{
+    "source": ["aws.codecommit"],
+    "detail-type": ["CodeCommit Repository State Change"],
+    "resources": ["arn:aws:codecommit:us-east-2:730335265587:terraform-aft-account-customizations", "arn:aws:codecommit:us-east-2:730335265587:terraform-aft-global-customizations"],
+    "detail": {
+      "referenceType": ["branch"],
+      "event": ["referenceDeleted", "referenceCreated"]
+    }
+}

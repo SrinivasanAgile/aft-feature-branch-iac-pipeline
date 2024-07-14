@@ -1,0 +1,119 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:CreateLogGroup",
+                "logs:PutLogEvents"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:logs:us-east-2:${account_id}:log-group:/aws/codebuild/*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "s3:*",
+                "s3-object-lambda:*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${bucket_name}",
+                "arn:aws:s3:::${bucket_name}/*"
+            ]
+        },
+        {
+            "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:GetBucketVersioning",
+                "s3:List*",
+                "s3:PutObjectAcl",
+                "s3:PutObject"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::aft-customizations-pipeline-${account_id}",
+                "arn:aws:s3:::aft-customizations-pipeline-${account_id}/*"
+            ]
+        },
+        {
+            "Action": [
+                "kms:Decrypt",
+                "kms:Encrypt",
+                "kms:GenerateDataKey"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+				"${kms_key_aft}",
+				"${kms_key_aft_backend}"
+				]
+        },
+        {
+            "Action": [
+                "ssm:GetParameters",
+                "ssm:GetParameter"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:ssm:us-east-2:${account_id}:parameter/aft/*"
+            ]
+        },
+        {
+            "Action": [
+                "codecommit:GetBranch",
+                "codecommit:GetRepository",
+                "codecommit:GetCommit",
+                "codecommit:GitPull",
+                "codecommit:UploadArchive",
+                "codecommit:GetUploadArchiveStatus",
+                "codecommit:CancelUploadArchive"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:codecommit:us-east-2:${account_id}:*customizations*"
+        },
+        {
+            "Action": [
+                "dynamodb:*Item"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:dynamodb:us-east-2:${account_id}:table/aft-request-metadata",
+				"arn:aws:dynamodb:us-east-2:${account_id}:table/aft-backend-${account_id}"
+            ]
+        },
+        {
+            "Action": [
+                "sts:AssumeRole"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:iam::${account_id}:role/AWSAFTAdmin"
+            ]
+        },
+        {
+            "Action": [
+                "dynamodb:GetItem"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:dynamodb:us-east-2:${account_id}:table/aft*"
+            ]
+        },
+        {
+            "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:GetBucketVersioning",
+                "s3:List*",
+                "s3:PutObjectAcl",
+                "s3:PutObject"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::aft-backend-${account_id}-primary-region",
+                "arn:aws:s3:::aft-backend-${account_id}-primary-region/*"
+            ]
+        }
+    ]
+}

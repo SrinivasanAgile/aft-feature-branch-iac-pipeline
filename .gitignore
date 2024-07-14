@@ -1,0 +1,18 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+*tfvars
+*.lock.hcl
+*_override.tf
+*_override.tf.json
+**/.terraform
+plugin_path
+lock.json
+*tfplan*
+packervars.temp
+temp_backend.tf
+tfvars.temp
+tfvars_backend.temp
+backend.temp
+**/.tf-tmp
+*.docx

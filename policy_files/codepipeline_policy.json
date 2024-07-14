@@ -1,0 +1,58 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "logs:CreateLogStream",
+                "logs:CreateLogGroup",
+                "logs:PutLogEvents"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:logs:us-east-2:${account_id}:log-group:/aws/codepipeline/*"
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "s3:*",
+                "s3-object-lambda:*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${artifacts_bucket}",
+                "arn:aws:s3:::${artifacts_bucket}/*"
+            ]
+        },
+        {
+            "Action": [
+                "kms:Decrypt",
+                "kms:Encrypt",
+                "kms:GenerateDataKey"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+				"${kms_key_aft}",
+				"${kms_key_aft_backend}"
+				]
+        },
+        {
+            "Action": [
+                "codecommit:GetBranch",
+                "codecommit:GetRepository",
+                "codecommit:GetCommit",
+                "codecommit:GitPull",
+                "codecommit:UploadArchive",
+                "codecommit:GetUploadArchiveStatus",
+                "codecommit:CancelUploadArchive"
+            ],
+            "Effect": "Allow",
+            "Resource": "arn:aws:codecommit:us-east-2:${account_id}:*customizations*"
+        },
+        {
+            "Action": [
+                "codebuild:*"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}
