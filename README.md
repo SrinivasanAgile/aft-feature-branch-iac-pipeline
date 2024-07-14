@@ -4,8 +4,7 @@
 This repository hosts the terraform code for implementing event-driven architecture to create and destroy IaC pipelines for every feature branch in AFT customization repositories.
 
 ## Solution Architecture
-
-![CI-CD Pipeline for AFT Repos (1)](https://github.com/user-attachments/assets/9eeaea9e-3ffc-4c03-97a8-d1eca76ee8d9)
+![DevOps_IaC_Pipeline_for_AFT_Repositories](https://github.com/user-attachments/assets/3f895baa-6745-46e3-8dd5-e311136983b2)
 
 ## Workflow
 1. Amazon EventBridge rule has been created to monitor any feature branch being created/deleted from ‘main’ branch of ‘aft-account-customizations’ and ‘aft-global-customizations’ repository. 
