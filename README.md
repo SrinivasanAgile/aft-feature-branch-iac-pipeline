@@ -33,7 +33,7 @@ This repository hosts the terraform code for implementing event-driven architect
 ## Contributing
 Feel free to dive in! [Open an issue](https://github.com/SrinivasanAgile/aft-feature-branch-iac-pipeline/issues/new) or [submit PRs.](https://github.com/SrinivasanAgile/aft-feature-branch-iac-pipeline/pulls)
 
-Standard Readme follows the [Contributor Covenant](https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/) Code of Conduct.
+Kindly adhere to the [Contributor Covenant](https://www.contributor-covenant.org/version/1/3/0/code-of-conduct/) Code of Conduct.
 
 ## License
 [Refer License](https://github.com/SrinivasanAgile/aft-feature-branch-iac-pipeline/blob/main/LICENSE)
